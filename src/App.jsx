@@ -8,6 +8,7 @@ import TestimonialsSection from './components/TestimonialsSection';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
+import WhatsAppButton from './components/WhatsAppButton';
 
 const AbogadaLandingPage = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -89,6 +90,7 @@ const AbogadaLandingPage = () => {
         setAppointmentForm={setAppointmentForm}
         consultationTypes={consultationTypes}
       />
+      <WhatsAppButton />
     </div>
   );
 };
