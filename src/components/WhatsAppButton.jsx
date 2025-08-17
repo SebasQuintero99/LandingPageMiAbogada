@@ -18,15 +18,21 @@ const WhatsAppButton = () => {
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
   return (
-    <a
-      href={whatsappUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 bg-green-500 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-all duration-300 z-50 transform hover:scale-110"
-      aria-label="Contactar por WhatsApp"
-    >
-      <WhatsAppIcon />
-    </a>
+    <div className="fixed bottom-6 right-6 z-50 group">
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-green-500 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-110"
+        aria-label="Contactar por WhatsApp"
+      >
+        <WhatsAppIcon />
+      </a>
+      <div className="absolute bottom-1/2 right-20 bg-slate-800 text-white text-sm rounded-md px-3 py-2 w-max transform translate-y-1/2 scale-0 group-hover:scale-100 transition-all duration-300 origin-right">
+        ¡Consulta tus dudas legales conmigo!
+        <div className="absolute top-1/2 -right-2 w-4 h-4 bg-slate-800 transform -translate-y-1/2 rotate-45"></div>
+      </div>
+    </div>
   );
 };
 
