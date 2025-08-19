@@ -65,6 +65,7 @@ const AbogadaLandingPage = () => {
       <Header scrollToSection={scrollToSection} setShowBookingModal={setShowBookingModal} />
       <main>
         <HeroSection scrollToSection={scrollToSection} setShowBookingModal={setShowBookingModal} />
+        <AboutSection />
         <ServicesSection />
         <AppointmentBookingSection 
           selectedDate={selectedDate}
@@ -75,7 +76,6 @@ const AbogadaLandingPage = () => {
           availableHours={availableHours}
           setShowBookingModal={setShowBookingModal}
         />
-        <AboutSection />
         <TestimonialsSection />
         <ContactSection />
       </main>
