@@ -42,8 +42,12 @@ const HeroSection = ({ scrollToSection, setShowBookingModal }) => {
           <div className="flex justify-center lg:justify-end">
             <div className="w-80 h-96 bg-white/10 backdrop-blur-sm rounded-3xl shadow-2xl flex items-center justify-center border border-white/20">
               <div className="text-center">
-                <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Scale className="w-16 h-16 text-white" />
+                <div className="w-48 h-48 rounded-full overflow-hidden mx-auto mb-6">
+                  <img 
+                    src="/src/assets/logo_circular_v2.svg" 
+                    alt="Logo" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <p className="text-lg text-white/90">Justicia • Experiencia • Resultados</p>
               </div>

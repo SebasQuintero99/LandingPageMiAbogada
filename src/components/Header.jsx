@@ -6,8 +6,12 @@ const Header = ({ scrollToSection, setShowBookingModal }) => {
     <header className="fixed top-0 w-full bg-white/90 backdrop-blur-md border-b border-slate-200 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <div className="flex items-center space-x-2">
-            <Scale className="w-8 h-8 text-[#66102B]" />
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/src/assets/LOGONEGRA.svg" 
+              alt="Logo" 
+              className="w-12 h-12"
+            />
             <span className="text-2xl font-bold text-slate-900">Dra. Angy Tatiana Garzón Fierro</span>
           </div>
           
