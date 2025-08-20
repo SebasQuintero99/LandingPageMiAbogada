@@ -1,5 +1,6 @@
 import React from 'react';
 import { Scale } from 'lucide-react';
+import logoNegra from '../assets/LOGONEGRA.svg';
 
 const Header = ({ scrollToSection, setShowBookingModal }) => {
   return (
@@ -8,7 +9,7 @@ const Header = ({ scrollToSection, setShowBookingModal }) => {
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-3">
             <img 
-              src="/src/assets/LOGONEGRA.svg" 
+              src={logoNegra} 
               alt="Logo" 
               className="w-12 h-12"
             />

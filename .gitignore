@@ -35,7 +35,54 @@ dist-ssr
 CLAUDE.md
 .claude/
 
-# Backend files
+# Environment variables and sensitive files
+.env
+.env.local
+.env.development
+.env.production
+.env.docker
 backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+
+# Database files
 backend/dev.db
+backend/dev.db-journal
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Docker volumes and data
+postgres_data/
+backend_uploads/
+
+# Backend files
 backend/prisma/migrations/
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.cert
+ssl/
+nginx/ssl/
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# IDE and editor files
+*.swp
+*.swo
+*~
+
+# Temporary files
+temp/
+tmp/

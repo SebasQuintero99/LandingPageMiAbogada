@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Scale } from 'lucide-react';
+import logoCircular from '../assets/logo_circular_v2.svg';
 
 const HeroSection = ({ scrollToSection, setShowBookingModal }) => {
   return (
@@ -44,7 +45,7 @@ const HeroSection = ({ scrollToSection, setShowBookingModal }) => {
               <div className="text-center">
                 <div className="w-48 h-48 rounded-full overflow-hidden mx-auto mb-6">
                   <img 
-                    src="/src/assets/logo_circular_v2.svg" 
+                    src={logoCircular} 
                     alt="Logo" 
                     className="w-full h-full object-cover"
                   />

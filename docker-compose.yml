@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: miabogada-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: miabogada_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - miabogada-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: miabogada-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/miabogada_db?schema=public
+      PORT: 3001
+      NODE_ENV: production
+      JWT_SECRET: miabogada-super-secret-jwt-key-2024
+      JWT_EXPIRES_IN: 24h
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      ADMIN_EMAIL: admin@miabogada.com
+      ADMIN_PASSWORD: admin123
+      ADMIN_NAME: Administrador
+      FRONTEND_URL: http://localhost:3000
+      BUSINESS_EMAIL: angytatianagarzonfierrolaboral@gmail.com
+      BUSINESS_PHONE: +573177154643
+      BUSINESS_NAME: Dra. Angy Tatiana Garzón Fierro
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - miabogada-network
+    volumes:
+      - backend_uploads:/app/uploads
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        npm start
+      "
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: miabogada-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - miabogada-network
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+
+  # Nginx Reverse Proxy (Optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: miabogada-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - miabogada-network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  miabogada-network:
+    driver: bridge
