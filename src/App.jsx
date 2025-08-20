@@ -4,6 +4,7 @@ import HeroSection from './components/HeroSection';
 import ServicesSection from './components/ServicesSection';
 import AppointmentBookingSection from './components/AppointmentBookingSection';
 import AboutSection from './components/AboutSection';
+import AlliedLawyersSection from './components/AlliedLawyersSection';
 import TestimonialsSection from './components/TestimonialsSection';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
@@ -67,6 +68,7 @@ const AbogadaLandingPage = () => {
         <HeroSection scrollToSection={scrollToSection} setShowBookingModal={setShowBookingModal} />
         <AboutSection />
         <ServicesSection />
+        <AlliedLawyersSection />
         <AppointmentBookingSection 
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
