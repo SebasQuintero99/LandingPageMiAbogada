@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  appointments Appointment[]
+  contacts     Contact[]
+
+  @@map("users")
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  date             DateTime
+  time             String
+  consultationType String
+  message          String?
+  status           AppointmentStatus @default(PENDING)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Cliente información
+  clientName  String
+  clientEmail String
+  clientPhone String
+
+  // Relación con usuario (opcional para clientes no registrados)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@map("appointments")
+}
+
+model Contact {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  status    ContactStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relación con usuario (opcional)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@map("contacts")
+}
+
+model Schedule {
+  id             String   @id @default(cuid())
+  date           DateTime @unique
+  isAvailable    Boolean  @default(true)
+  availableHours String   // JSON string de horas disponibles
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("schedules")
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum ContactStatus {
+  PENDING
+  REVIEWED
+  RESPONDED
+}
