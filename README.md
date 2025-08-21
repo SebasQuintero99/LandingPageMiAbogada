@@ -2,33 +2,71 @@
 
 Sistema web completo para la abogada **Dra. Angy Tatiana Garzón Fierro** especializada en Derecho Laboral y Seguridad Social.
 
+**🐳 Completamente Dockerizado** - Listo para desarrollo y producción.
+
 ## 📁 Estructura del Proyecto
 
 ```
 MIABOGADA/
-├── frontend/          # React + Vite + Tailwind
-├── backend/           # Node.js + Express + Prisma
-├── README.md          # Este archivo
-└── .gitignore         # Archivos ignorados
+├── frontend/                 # React + Vite + Nginx
+│   ├── src/                 # Código fuente React
+│   ├── Dockerfile           # Docker multi-stage build
+│   ├── nginx.conf           # Configuración Nginx
+│   └── package.json         # Dependencias frontend
+├── backend/                 # Node.js + Express + Prisma
+│   ├── src/                 # API y controladores
+│   ├── prisma/              # Schema y migraciones DB
+│   ├── scripts/             # Scripts utilitarios
+│   ├── Dockerfile           # Docker backend
+│   ├── healthcheck.js       # Health checks
+│   └── package.json         # Dependencias backend
+├── docker-compose.yml       # Orquestación servicios
+├── DOCKER.md               # Documentación Docker
+├── .env.docker             # Variables de entorno template
+└── README.md               # Este archivo
 ```
 
 ## 🚀 Inicio Rápido
 
-### **Frontend** (Puerto 5176)
+### 🐳 **Con Docker (Recomendado)**
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd MIABOGADA
+
+# Configurar variables de entorno (opcional)
+cp .env.docker .env
+# Editar .env con tus credenciales SMTP
+
+# Iniciar todos los servicios
+docker-compose up -d --build
+
+# Ver logs
+docker-compose logs -f
+```
+
+**URLs:**
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001  
+- **Base de datos**: localhost:5432 (PostgreSQL)
+
+### 💻 **Desarrollo Local**
+
+#### **Frontend** (Puerto 5173)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### **Backend** (Puerto 3001)
+#### **Backend** (Puerto 3001)
 ```bash
 cd backend
 npm install
 npm run dev
 ```
 
-### **Crear Usuario Admin**
+#### **Crear Usuario Admin**
 ```bash
 cd backend
 npm run seed:admin
@@ -55,19 +93,28 @@ npm run seed:admin
 
 ## 🔧 Tecnologías
 
-### Frontend
-- **React 19** + **Vite**
-- **Tailwind CSS v4**
+### 🐳 **Docker & DevOps**
+- **Docker** + **Docker Compose**
+- **Multi-stage builds** (optimización)
+- **Nginx** (reverse proxy, static files)
+- **PostgreSQL 15** (base de datos)
+- **Health checks** y **auto-restart**
+
+### 🎨 **Frontend**
+- **React 19** + **Vite 7**
+- **Tailwind CSS v4** (styling)
 - **Lucide React** (iconos)
 - **ESLint** (linting)
+- **Nginx Alpine** (servidor web)
 
-### Backend
-- **Node.js** + **Express 4**
-- **Prisma ORM** + **SQLite**
+### ⚙️ **Backend**
+- **Node.js 18** + **Express 4**
+- **Prisma ORM** + **PostgreSQL**
 - **JWT** (autenticación)
 - **Zod** (validaciones)
 - **Nodemailer** (emails)
 - **Bcrypt** (encriptación)
+- **Health checks** integrados
 
 ## 📊 Endpoints API
 
@@ -83,67 +130,136 @@ npm run seed:admin
 - `GET /api/contacts` - Ver mensajes
 - `GET /api/auth/profile` - Perfil
 
-## 🌐 URLs de Desarrollo
+## 🌐 URLs de Acceso
 
-- **Frontend**: http://localhost:5176
+### 🐳 **Docker (Producción)**
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001  
+- **Base de datos**: localhost:5432 (PostgreSQL)
+- **Health Check**: http://localhost:3001/api/health
+
+### 💻 **Desarrollo Local**
+- **Frontend**: http://localhost:5173
 - **Backend**: http://localhost:3001
 - **Health Check**: http://localhost:3001/api/health
 
 ## 📋 Scripts Disponibles
 
-### Frontend
+### 🐳 **Docker Commands**
 ```bash
-npm run dev      # Desarrollo
-npm run build    # Construcción
-npm run lint     # Linting
+# Iniciar servicios
+docker-compose up -d
+
+# Rebuild y restart
+docker-compose up -d --build
+
+# Ver logs
+docker-compose logs -f
+docker-compose logs backend
+docker-compose logs frontend
+
+# Parar servicios
+docker-compose down
+
+# Acceder a contenedores
+docker-compose exec backend npm run prisma:studio
+docker-compose exec backend npm run seed:admin
+```
+
+### 🎨 **Frontend**
+```bash
+npm run dev      # Desarrollo (localhost:5173)
+npm run build    # Construcción para producción
+npm run lint     # Linting ESLint
 npm run preview  # Preview de build
 ```
 
-### Backend
+### ⚙️ **Backend**
 ```bash
-npm run dev              # Desarrollo
+npm run dev              # Desarrollo con auto-reload
 npm start               # Producción
-npm run seed:admin      # Crear admin
-npm run prisma:studio   # Ver base de datos
-npm run prisma:migrate  # Migrar DB
+npm run seed:admin      # Crear usuario admin
+npm run prisma:studio   # Interface visual DB
+npm run prisma:migrate  # Aplicar migraciones
 ```
 
 ## 🗄️ Base de Datos
 
-### Modelos
+### 🐳 **PostgreSQL (Docker)**
+- **Versión**: PostgreSQL 15 Alpine
+- **Puerto**: 5432
+- **Base de datos**: miabogada_db
+- **Volumenes persistentes**: ✅
+- **Migraciones automáticas**: ✅
+
+### 📊 **Modelos**
 - **User** - Usuarios (admin/cliente)
-- **Appointment** - Citas agendadas
+- **Appointment** - Citas agendadas  
 - **Contact** - Mensajes de contacto
 - **Schedule** - Horarios disponibles
 
-### Cambiar a PostgreSQL
-1. Instalar PostgreSQL
-2. Cambiar `DATABASE_URL` en `backend/.env`
-3. Cambiar `provider = "postgresql"` en `backend/prisma/schema.prisma`
-4. Ejecutar `npm run prisma:migrate`
+### 🔄 **Gestión de DB**
+```bash
+# Con Docker
+docker-compose exec backend npx prisma studio
+docker-compose exec backend npx prisma migrate deploy
+docker-compose exec postgres psql -U postgres -d miabogada_db
+
+# Local
+npm run prisma:studio   # Interface visual
+npm run prisma:migrate  # Aplicar migraciones
+npm run prisma:reset    # Reset completo (⚠️ borra datos)
+```
 
 ## 📧 Configuración de Email
 
-Para envío automático de emails:
-1. Configurar Gmail con 2FA
-2. Generar contraseña de aplicación
-3. Actualizar variables en `backend/.env`:
-```env
+### Variables de Entorno
+```bash
+# Copiar template
+cp .env.docker .env
+
+# Editar con tus credenciales
 SMTP_USER=tu-email@gmail.com
 SMTP_PASS=tu-app-password
 ```
 
+### Gmail Setup
+1. Activar 2FA en Gmail
+2. Generar contraseña de aplicación
+3. Usar la contraseña de app (no la de tu cuenta)
+
 ## 🚀 Despliegue
 
-### Frontend
-- **Vercel**, **Netlify**, o cualquier hosting estático
-- Build: `npm run build`
-- Carpeta de salida: `dist/`
+### 🐳 **Con Docker (Recomendado)**
+```bash
+# Producción con SSL
+docker-compose --profile production up -d
 
-### Backend
+# Usar PostgreSQL externo
+# Actualizar DATABASE_URL en .env
+```
+
+### ☁️ **Cloud Deployment**
+
+#### **Frontend**
+- **Vercel**, **Netlify**
+- Build command: `npm run build`
+- Output directory: `dist/`
+- Node version: 18+
+
+#### **Backend**  
 - **Railway**, **Render**, **Heroku**
-- Configurar PostgreSQL en producción
-- Variables de entorno requeridas
+- Container deployment con Dockerfile
+- PostgreSQL addon requerido
+
+#### **Variables Requeridas**
+```env
+DATABASE_URL=postgresql://...
+JWT_SECRET=tu-secret-key
+SMTP_USER=email@gmail.com
+SMTP_PASS=app-password
+NODE_ENV=production
+```
 
 ## 👩‍💼 Información del Cliente
 
@@ -159,7 +275,65 @@ SMTP_PASS=tu-app-password
 - Pensiones
 - Accidentes Laborales
 
+## 🐳 Docker - Guía Completa
+
+### **Arquitectura de Contenedores**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend       │    │   Database      │
+│   (nginx)       │────│   (Node.js)     │────│   (PostgreSQL)  │
+│   Port 3000     │    │   Port 3001     │    │   Port 5432     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **Servicios Incluidos**
+- 🌐 **Frontend**: React + Vite + Nginx
+- ⚙️ **Backend**: Node.js + Express + Prisma
+- 🗄️ **Database**: PostgreSQL 15 con volúmenes persistentes
+- 🔄 **Health Checks**: Monitoreo automático de servicios
+- 🔒 **Security**: Usuarios no-root, configuración segura
+
+### **Comandos Útiles**
+```bash
+# Estado de contenedores
+docker-compose ps
+
+# Reiniciar un servicio específico
+docker-compose restart backend
+
+# Ver uso de recursos
+docker stats
+
+# Limpiar sistema Docker
+docker system prune -a
+
+# Backup de base de datos
+docker-compose exec postgres pg_dump -U postgres miabogada_db > backup.sql
+```
+
+### **Troubleshooting**
+```bash
+# Ver logs específicos
+docker-compose logs backend -f
+docker-compose logs frontend -f
+
+# Acceder a shell de contenedor
+docker-compose exec backend sh
+docker-compose exec postgres psql -U postgres
+
+# Reset completo
+docker-compose down -v --remove-orphans
+docker-compose up -d --build
+```
+
+### **Documentación Completa**
+📖 Ver `DOCKER.md` para documentación detallada de Docker.
+
 ## 📝 Licencia
 
 Proyecto privado para **Dra. Angy Tatiana Garzón Fierro**
+
+---
+
+*🐳 Dockerizado y listo para producción | 🚀 Built with love by Claude Code*
 
