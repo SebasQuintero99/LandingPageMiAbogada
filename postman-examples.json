@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "MiAbogada Backend API",
+    "description": "Colección de pruebas para el backend de MiAbogada",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "Available Dates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/appointments/available-dates",
+          "host": ["{{base_url}}"],
+          "path": ["api", "appointments", "available-dates"]
+        }
+      }
+    },
+    {
+      "name": "Create Appointment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"date\": \"2025-08-25\",\n    \"time\": \"10:00\",\n    \"consultationType\": \"Derecho Laboral\",\n    \"clientName\": \"Juan Pérez\",\n    \"clientEmail\": \"juan.perez@example.com\",\n    \"clientPhone\": \"+573001234567\",\n    \"message\": \"Consulta sobre terminación de contrato laboral\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/appointments",
+          "host": ["{{base_url}}"],
+          "path": ["api", "appointments"]
+        }
+      }
+    },
+    {
+      "name": "Send Contact Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"María García\",\n    \"email\": \"maria.garcia@example.com\",\n    \"phone\": \"+573009876543\",\n    \"message\": \"Necesito asesoría sobre despido injustificado\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/contacts",
+          "host": ["{{base_url}}"],
+          "path": ["api", "contacts"]
+        }
+      }
+    },
+    {
+      "name": "Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"admin@miabogada.com\",\n    \"password\": \"admin123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Get Appointments (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/appointments",
+          "host": ["{{base_url}}"],
+          "path": ["api", "appointments"]
+        }
+      }
+    },
+    {
+      "name": "Get Contacts (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/appointments",
+          "host": ["{{base_url}}"],
+          "path": ["api", "contacts"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}
