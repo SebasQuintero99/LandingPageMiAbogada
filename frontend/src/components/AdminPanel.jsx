@@ -12,6 +12,8 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import AppointmentManagement from './AppointmentManagement';
+import ContactManagement from './ContactManagement';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -200,18 +202,10 @@ const AdminPanel = () => {
             <DashboardContent stats={stats} loading={loading} />
           )}
           {activeTab === 'appointments' && (
-            <div className="text-center py-20">
-              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Gestión de Citas</h3>
-              <p className="text-gray-600">Próximamente implementaremos la gestión de citas</p>
-            </div>
+            <AppointmentManagement />
           )}
           {activeTab === 'contacts' && (
-            <div className="text-center py-20">
-              <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Gestión de Contactos</h3>
-              <p className="text-gray-600">Próximamente implementaremos la gestión de contactos</p>
-            </div>
+            <ContactManagement />
           )}
           {activeTab === 'settings' && (
             <div className="text-center py-20">
