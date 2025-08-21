@@ -1,8 +1,4 @@
 import React, { useState } from 'react';
-import { AuthProvider } from './contexts/AuthContext';
-import AdminLogin from './components/AdminLogin';
-import AdminPanel from './components/AdminPanel';
-import ProtectedRoute from './components/ProtectedRoute';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import ServicesSection from './components/ServicesSection';
@@ -15,7 +11,7 @@ import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
 import WhatsAppButton from './components/WhatsAppButton';
 
-const LandingPage = ({ setCurrentView }) => {
+const AbogadaLandingPage = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -65,17 +61,9 @@ const LandingPage = ({ setCurrentView }) => {
     }
   };
 
-  const handleAdminClick = () => {
-    setCurrentView('admin');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <Header 
-        scrollToSection={scrollToSection} 
-        setShowBookingModal={setShowBookingModal}
-        setCurrentView={handleAdminClick}
-      />
+      <Header scrollToSection={scrollToSection} setShowBookingModal={setShowBookingModal} />
       <main>
         <HeroSection scrollToSection={scrollToSection} setShowBookingModal={setShowBookingModal} />
         <AboutSection />
@@ -109,24 +97,4 @@ const LandingPage = ({ setCurrentView }) => {
   );
 };
 
-const App = () => {
-  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'admin'
-
-  if (currentView === 'admin') {
-    return (
-      <AuthProvider>
-        <ProtectedRoute requireAdmin={true}>
-          <AdminPanel />
-        </ProtectedRoute>
-      </AuthProvider>
-    );
-  }
-
-  return (
-    <AuthProvider>
-      <LandingPage setCurrentView={setCurrentView} />
-    </AuthProvider>
-  );
-};
-
-export default App;
+export default AbogadaLandingPage;

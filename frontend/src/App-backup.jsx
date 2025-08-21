@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
-import AdminLogin from './components/AdminLogin';
-import AdminPanel from './components/AdminPanel';
-import ProtectedRoute from './components/ProtectedRoute';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import ServicesSection from './components/ServicesSection';
@@ -14,6 +11,38 @@ import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
 import WhatsAppButton from './components/WhatsAppButton';
+import AdminPanel from './components/AdminPanel';
+import ProtectedRoute from './components/ProtectedRoute';
+
+const App = () => {
+  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'admin'
+
+  return (
+    <AuthProvider>
+      <AppContent currentView={currentView} setCurrentView={setCurrentView} />
+    </AuthProvider>
+  );
+};
+
+const AppContent = ({ currentView, setCurrentView }) => {
+  // Check if URL contains admin path
+  React.useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes('/admin')) {
+      setCurrentView('admin');
+    }
+  }, [setCurrentView]);
+
+  if (currentView === 'admin') {
+    return (
+      <ProtectedRoute requireAdmin={true}>
+        <AdminPanel />
+      </ProtectedRoute>
+    );
+  }
+
+  return <LandingPage setCurrentView={setCurrentView} />;
+};
 
 const LandingPage = ({ setCurrentView }) => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -33,29 +62,21 @@ const LandingPage = ({ setCurrentView }) => {
   const generateAvailableDates = () => {
     const dates = [];
     const today = new Date();
+    
     for (let i = 1; i <= 30; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
+      
+      // Solo días laborables (lunes a viernes)
       if (date.getDay() !== 0 && date.getDay() !== 6) {
-        dates.push(date);
+        dates.push({
+          date: date,
+          availableHours: [...availableHours]
+        });
       }
     }
+    
     return dates;
-  };
-
-  const availableDates = generateAvailableDates();
-
-  const handleBookAppointment = (e) => {
-    e.preventDefault();
-    if (!selectedDate || !selectedTime) {
-      alert('Por favor selecciona fecha y hora');
-      return;
-    }
-    alert(`¡Cita agendada exitosamente!\nFecha: ${selectedDate.toLocaleDateString('es-CO')}\nHora: ${selectedTime}\nTipo: ${appointmentForm.consultationType}`);
-    setShowBookingModal(false);
-    setSelectedDate(null);
-    setSelectedTime('');
-    setAppointmentForm({ name: '', email: '', phone: '', consultationType: '', message: '' });
   };
 
   const scrollToSection = (sectionId) => {
@@ -65,31 +86,46 @@ const LandingPage = ({ setCurrentView }) => {
     }
   };
 
-  const handleAdminClick = () => {
-    setCurrentView('admin');
+  const handleBookAppointment = async (appointmentData) => {
+    // Aquí se implementará la lógica para reservar la cita
+    console.log('Cita reservada:', appointmentData);
+    
+    // Simular éxito
+    alert('¡Cita reservada exitosamente! Te contactaremos pronto.');
+    setShowBookingModal(false);
+    
+    // Reset form
+    setAppointmentForm({
+      name: '',
+      email: '',
+      phone: '',
+      consultationType: '',
+      message: ''
+    });
+    setSelectedDate(null);
+    setSelectedTime('');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-white">
       <Header 
         scrollToSection={scrollToSection} 
         setShowBookingModal={setShowBookingModal}
-        setCurrentView={handleAdminClick}
+        setCurrentView={setCurrentView}
       />
       <main>
         <HeroSection scrollToSection={scrollToSection} setShowBookingModal={setShowBookingModal} />
-        <AboutSection />
         <ServicesSection />
-        <AlliedLawyersSection />
         <AppointmentBookingSection 
+          generateAvailableDates={generateAvailableDates}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           selectedTime={selectedTime}
           setSelectedTime={setSelectedTime}
-          availableDates={availableDates}
-          availableHours={availableHours}
           setShowBookingModal={setShowBookingModal}
         />
+        <AboutSection />
+        <AlliedLawyersSection />
         <TestimonialsSection />
         <ContactSection />
       </main>
@@ -106,26 +142,6 @@ const LandingPage = ({ setCurrentView }) => {
       />
       <WhatsAppButton />
     </div>
-  );
-};
-
-const App = () => {
-  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'admin'
-
-  if (currentView === 'admin') {
-    return (
-      <AuthProvider>
-        <ProtectedRoute requireAdmin={true}>
-          <AdminPanel />
-        </ProtectedRoute>
-      </AuthProvider>
-    );
-  }
-
-  return (
-    <AuthProvider>
-      <LandingPage setCurrentView={setCurrentView} />
-    </AuthProvider>
   );
 };
 
