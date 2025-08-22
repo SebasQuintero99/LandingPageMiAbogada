@@ -30,9 +30,11 @@ const AppointmentManagement = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest('/api/appointments');
+      const response = await apiRequest('/api/appointments/admin');
+      
       if (response.success) {
-        setAppointments(response.data.appointments || []);
+        const appointmentsData = response.data?.appointments || [];
+        setAppointments(appointmentsData);
       } else {
         console.error('Error fetching appointments:', response.error);
       }
@@ -51,7 +53,7 @@ const AppointmentManagement = () => {
         body: JSON.stringify({ status: newStatus })
       });
       
-      if (response.success) {
+      if (response.message) {
         // Update local state
         setAppointments(appointments.map(apt => 
           apt.id === appointmentId ? { ...apt, status: newStatus } : apt
@@ -74,6 +76,7 @@ const AppointmentManagement = () => {
       apt.consultationType.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -101,13 +104,17 @@ const AppointmentManagement = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const formatCreatedDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-CO', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Quitamos el loading inicial para debug
 
   return (
     <div className="space-y-6">
@@ -158,7 +165,12 @@ const AppointmentManagement = () => {
 
       {/* Appointments List */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        {filteredAppointments.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-sm text-gray-500">Cargando citas...</p>
+          </div>
+        ) : filteredAppointments.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No hay citas</h3>
@@ -183,6 +195,9 @@ const AppointmentManagement = () => {
                     Tipo de Consulta
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha Creación
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -191,8 +206,8 @@ const AppointmentManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50">
+                {filteredAppointments.map((appointment, index) => (
+                  <tr key={appointment.id || index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -237,6 +252,14 @@ const AppointmentManagement = () => {
                           <span className="truncate max-w-xs">{appointment.message}</span>
                         </div>
                       )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatCreatedDate(appointment.createdAt)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Registrado en web
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(appointment.status)}

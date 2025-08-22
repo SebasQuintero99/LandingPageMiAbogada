@@ -22,17 +22,17 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend API
+  # Backend API (Development Mode)
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: miabogada-backend
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/miabogada_db?schema=public
       PORT: 3001
-      NODE_ENV: production
+      NODE_ENV: development
       JWT_SECRET: miabogada-super-secret-jwt-key-2024
       JWT_EXPIRES_IN: 24h
       SMTP_HOST: smtp.gmail.com
@@ -42,7 +42,7 @@ services:
       ADMIN_EMAIL: admin@miabogada.com
       ADMIN_PASSWORD: admin123
       ADMIN_NAME: Administrador
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:5173
       BUSINESS_EMAIL: angytatianagarzonfierrolaboral@gmail.com
       BUSINESS_PHONE: +573177154643
       BUSINESS_NAME: Dra. Angy Tatiana Garzón Fierro
@@ -54,28 +54,33 @@ services:
     networks:
       - miabogada-network
     volumes:
-      - backend_uploads:/app/uploads
+      - ./backend:/app
+      - /app/node_modules
     command: >
       sh -c "
         npx prisma migrate deploy &&
-        npm start
+        npm run dev
       "
 
-  # Frontend
+  # Frontend (Development Mode)
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: miabogada-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "5173:5173"
     depends_on:
       - backend
     networks:
       - miabogada-network
     environment:
-      - REACT_APP_API_URL=http://localhost:3001
+      - VITE_API_URL=http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
 
   # Nginx Reverse Proxy (Optional for production)
   nginx:

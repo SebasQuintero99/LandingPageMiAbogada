@@ -25,11 +25,11 @@ const HeroSection = ({ scrollToSection, setShowBookingModal }) => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <button 
-                onClick={() => setShowBookingModal(true)}
+                onClick={() => scrollToSection('citas')}
                 className="bg-white text-[#66102B] px-8 py-4 rounded-full font-semibold text-lg hover:bg-slate-100 transform hover:scale-105 transition-all duration-300 shadow-xl"
               >
                 <Calendar className="w-5 h-5 inline mr-2" />
-                Agendar Consulta
+                Agendar Cita
               </button>
               <button 
                 onClick={() => scrollToSection('servicios')}

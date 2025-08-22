@@ -1,12 +1,23 @@
 const prisma = require('../utils/database');
-const { appointmentSchema } = require('../utils/validation');
+const { createAppointmentSchema, getActiveConsultationTypes } = require('../utils/validation');
 const emailService = require('../services/emailService');
 
 // Crear nueva cita
 const createAppointment = async (req, res) => {
   try {
-    // Validar datos de entrada
-    const validatedData = appointmentSchema.parse(req.body);
+    // Crear esquema dinámico basado en configuración actual
+    const dynamicSchema = await createAppointmentSchema();
+    
+    // Validar datos de entrada con esquema dinámico
+    const validatedData = dynamicSchema.parse(req.body);
+    
+    // Verificar que el tipo de consulta esté activo
+    const activeTypes = await getActiveConsultationTypes();
+    if (!activeTypes.includes(validatedData.consultationType)) {
+      return res.status(400).json({
+        error: 'Tipo de consulta no disponible actualmente'
+      });
+    }
     
     // Verificar disponibilidad de fecha y hora
     const existingAppointment = await prisma.appointment.findFirst({
@@ -100,12 +111,15 @@ const getAppointments = async (req, res) => {
     const total = await prisma.appointment.count({ where });
 
     res.json({
-      appointments,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
+      success: true,
+      data: {
+        appointments,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit)
+        }
       }
     });
 
@@ -169,15 +183,90 @@ const getAvailableDates = async (req, res) => {
     const availableDates = [];
     const today = new Date();
     
-    // Horarios disponibles por defecto
-    const defaultHours = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+    // Obtener configuración de horarios desde la base de datos
+    let scheduleConfig = await prisma.setting.findFirst({
+      where: { key: 'schedule' }
+    });
+
+    // Si no existe la configuración, crear con valores por defecto
+    if (!scheduleConfig) {
+      const defaultSchedule = {
+        workDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+        startTime: '09:00',
+        endTime: '17:00',
+        lunchStart: '12:00',
+        lunchEnd: '14:00',
+        appointmentDuration: 60
+      };
+      
+      scheduleConfig = await prisma.setting.create({
+        data: {
+          key: 'schedule',
+          value: JSON.stringify(defaultSchedule)
+        }
+      });
+    }
+
+    const schedule = JSON.parse(scheduleConfig.value);
+    
+    const workDays = schedule.workDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    const startTime = schedule.startTime || '09:00';
+    const endTime = schedule.endTime || '17:00';
+    const lunchStart = schedule.lunchStart || '12:00';
+    const lunchEnd = schedule.lunchEnd || '14:00';
+    const appointmentDuration = parseInt(schedule.appointmentDuration) || 60;
+
+    // Generar horarios disponibles basados en configuración
+    const generateTimeSlots = () => {
+      const slots = [];
+      const start = new Date(`2000-01-01T${startTime}:00`);
+      const end = new Date(`2000-01-01T${endTime}:00`);
+      const lunchStartTime = new Date(`2000-01-01T${lunchStart}:00`);
+      const lunchEndTime = new Date(`2000-01-01T${lunchEnd}:00`);
+      
+      const current = new Date(start);
+      while (current < end) {
+        const timeString = current.toTimeString().substring(0, 5);
+        
+        // Evitar horarios de almuerzo
+        if (current < lunchStartTime || current >= lunchEndTime) {
+          slots.push(timeString);
+        }
+        
+        current.setMinutes(current.getMinutes() + appointmentDuration);
+      }
+      return slots;
+    };
+
+    const availableHours = generateTimeSlots();
+
+    // Mapeo de días de semana
+    const dayMap = {
+      'sunday': 0,
+      'monday': 1,
+      'tuesday': 2,
+      'wednesday': 3,
+      'thursday': 4,
+      'friday': 5,
+      'saturday': 6
+    };
+
+    // Obtener fechas disponibles específicas del calendario
+    const configuredDates = schedule.availableDates || [];
 
     for (let i = 1; i <= parseInt(days); i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
+      // Evitar problemas de timezone usando formato local
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
       
-      // Solo días de semana (lunes a viernes)
-      if (date.getDay() !== 0 && date.getDay() !== 6) {
+      // Solo usar fechas específicamente marcadas como disponibles en el calendario
+      const isDayAvailable = configuredDates.includes(dateString);
+      
+      if (isDayAvailable) {
         // Obtener citas existentes para esta fecha
         const existingAppointments = await prisma.appointment.findMany({
           where: {
@@ -193,12 +282,12 @@ const getAvailableDates = async (req, res) => {
         });
 
         const occupiedHours = existingAppointments.map(apt => apt.time);
-        const availableHours = defaultHours.filter(hour => !occupiedHours.includes(hour));
+        const availableSlots = availableHours.filter(hour => !occupiedHours.includes(hour));
 
-        if (availableHours.length > 0) {
+        if (availableSlots.length > 0) {
           availableDates.push({
             date: date.toISOString().split('T')[0],
-            availableHours
+            availableHours: availableSlots
           });
         }
       }

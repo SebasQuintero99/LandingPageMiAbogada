@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   MessageSquare, 
@@ -8,15 +9,17 @@ import {
   X,
   Bell,
   BarChart3,
-  Settings,
+  Settings as SettingsIcon,
   RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AppointmentManagement from './AppointmentManagement';
 import ContactManagement from './ContactManagement';
+import Settings from './Settings';
 
 const AdminPanel = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState({
     totalAppointments: 0,
@@ -28,6 +31,17 @@ const AdminPanel = () => {
 
   const { user, logout, apiRequest } = useAuth();
 
+  // Obtener tab activo basado en la URL
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.includes('/citas')) return 'appointments';
+    if (path.includes('/contactos')) return 'contacts';
+    if (path.includes('/configuracion')) return 'settings';
+    return 'dashboard';
+  };
+
+  const activeTab = getActiveTab();
+
   useEffect(() => {
     loadStats();
   }, []);
@@ -36,7 +50,7 @@ const AdminPanel = () => {
     setLoading(true);
     
     // Cargar estadísticas de citas
-    const appointmentsResult = await apiRequest('/api/appointments');
+    const appointmentsResult = await apiRequest('/api/appointments/admin');
     const contactsResult = await apiRequest('/api/contacts');
 
     if (appointmentsResult.success) {
@@ -66,13 +80,14 @@ const AdminPanel = () => {
 
   const handleLogout = () => {
     logout();
+    navigate('/');
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'appointments', label: 'Citas', icon: Calendar },
-    { id: 'contacts', label: 'Contactos', icon: MessageSquare },
-    { id: 'settings', label: 'Configuración', icon: Settings },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/admin' },
+    { id: 'appointments', label: 'Citas', icon: Calendar, path: '/admin/citas' },
+    { id: 'contacts', label: 'Contactos', icon: MessageSquare, path: '/admin/contactos' },
+    { id: 'settings', label: 'Configuración', icon: SettingsIcon, path: '/admin/configuracion' },
   ];
 
   return (
@@ -118,8 +133,8 @@ const AdminPanel = () => {
               const Icon = item.icon;
               return (
                 <li key={item.id}>
-                  <button
-                    onClick={() => setActiveTab(item.id)}
+                  <Link
+                    to={item.path}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       activeTab === item.id
                         ? 'bg-[#4a0c1f] text-white'
@@ -138,7 +153,7 @@ const AdminPanel = () => {
                         {stats.pendingContacts}
                       </span>
                     )}
-                  </button>
+                  </Link>
                 </li>
               );
             })}
@@ -198,22 +213,12 @@ const AdminPanel = () => {
 
         {/* Content */}
         <main className="flex-1 p-6">
-          {activeTab === 'dashboard' && (
-            <DashboardContent stats={stats} loading={loading} />
-          )}
-          {activeTab === 'appointments' && (
-            <AppointmentManagement />
-          )}
-          {activeTab === 'contacts' && (
-            <ContactManagement />
-          )}
-          {activeTab === 'settings' && (
-            <div className="text-center py-20">
-              <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Configuración</h3>
-              <p className="text-gray-600">Próximamente implementaremos la configuración del sistema</p>
-            </div>
-          )}
+          <Routes>
+            <Route index element={<DashboardContent stats={stats} loading={loading} />} />
+            <Route path="citas" element={<AppointmentManagement />} />
+            <Route path="contactos" element={<ContactManagement />} />
+            <Route path="configuracion" element={<Settings />} />
+          </Routes>
         </main>
       </div>
 

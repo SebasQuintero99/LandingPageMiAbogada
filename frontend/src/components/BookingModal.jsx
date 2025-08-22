@@ -12,6 +12,16 @@ const BookingModal = ({
 }) => {
   if (!showBookingModal) return null;
 
+  // Función para verificar si el formulario es válido
+  const isFormValid = () => {
+    const nameValid = appointmentForm.name && appointmentForm.name.length >= 2;
+    const emailValid = appointmentForm.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(appointmentForm.email);
+    const phoneValid = appointmentForm.phone && appointmentForm.phone.length === 10;
+    const consultationValid = appointmentForm.consultationType && consultationTypes.includes(appointmentForm.consultationType);
+    
+    return nameValid && emailValid && phoneValid && consultationValid && selectedDate && selectedTime;
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -43,39 +53,109 @@ const BookingModal = ({
           <form onSubmit={handleBookAppointment} className="space-y-4">
             <input
               type="text"
-              placeholder="Nombre completo"
+              placeholder="Nombre completo (mínimo 2 caracteres)"
               value={appointmentForm.name}
-              onChange={(e) => setAppointmentForm({...appointmentForm, name: e.target.value})}
-              className="w-full p-4 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B]"
+              onChange={(e) => {
+                // Solo permitir letras y espacios
+                const value = e.target.value.replace(/[^a-zA-ZÀ-ÿ\u00f1\u00d1\s]/g, '');
+                setAppointmentForm({...appointmentForm, name: value});
+              }}
+              className={`w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B] ${
+                appointmentForm.name && appointmentForm.name.length < 2 
+                  ? 'border-red-300 bg-red-50' 
+                  : 'border-slate-300'
+              }`}
               required
             />
+            {appointmentForm.name && (
+              <div className={`text-sm mt-1 ${
+                appointmentForm.name.length >= 2 
+                  ? 'text-green-600' 
+                  : 'text-red-600'
+              }`}>
+                {appointmentForm.name.length >= 2 
+                  ? '✓ Nombre válido' 
+                  : `${appointmentForm.name.length}/2 caracteres mínimos`
+                }
+              </div>
+            )}
             <input
               type="email"
               placeholder="Correo electrónico"
               value={appointmentForm.email}
               onChange={(e) => setAppointmentForm({...appointmentForm, email: e.target.value})}
-              className="w-full p-4 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B]"
+              className={`w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B] ${
+                appointmentForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(appointmentForm.email)
+                  ? 'border-red-300 bg-red-50' 
+                  : 'border-slate-300'
+              }`}
               required
             />
+            {appointmentForm.email && (
+              <div className={`text-sm mt-1 ${
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(appointmentForm.email)
+                  ? 'text-green-600' 
+                  : 'text-red-600'
+              }`}>
+                {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(appointmentForm.email)
+                  ? '✓ Email válido' 
+                  : 'Formato de email inválido'
+                }
+              </div>
+            )}
             <input
               type="tel"
-              placeholder="Teléfono"
+              placeholder="Teléfono (10 dígitos)"
               value={appointmentForm.phone}
-              onChange={(e) => setAppointmentForm({...appointmentForm, phone: e.target.value})}
-              className="w-full p-4 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B]"
+              onChange={(e) => {
+                // Solo permitir números y limitar a 10 dígitos
+                const numbersOnly = e.target.value.replace(/\D/g, '');
+                if (numbersOnly.length <= 10) {
+                  setAppointmentForm({...appointmentForm, phone: numbersOnly});
+                }
+              }}
+              className={`w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B] ${
+                appointmentForm.phone && appointmentForm.phone.length !== 10 
+                  ? 'border-red-300 bg-red-50' 
+                  : appointmentForm.phone.length === 10
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-slate-300'
+              }`}
+              maxLength="10"
               required
             />
+            {appointmentForm.phone && (
+              <div className={`text-sm mt-1 ${
+                appointmentForm.phone.length === 10 
+                  ? 'text-green-600' 
+                  : 'text-red-600'
+              }`}>
+                {appointmentForm.phone.length === 10 
+                  ? '✓ Teléfono válido' 
+                  : `${appointmentForm.phone.length}/10 dígitos`
+                }
+              </div>
+            )}
             <select
               value={appointmentForm.consultationType}
               onChange={(e) => setAppointmentForm({...appointmentForm, consultationType: e.target.value})}
-              className="w-full p-4 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B]"
+              className={`w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#66102B] ${
+                !appointmentForm.consultationType
+                  ? 'border-slate-300' 
+                  : 'border-green-300 bg-green-50'
+              }`}
               required
             >
-              <option value="">Tipo de consulta</option>
+              <option value="">Selecciona el tipo de consulta</option>
               {consultationTypes.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+            {appointmentForm.consultationType && (
+              <div className="text-sm mt-1 text-green-600">
+                ✓ Tipo de consulta seleccionado
+              </div>
+            )}
             <textarea
               placeholder="Describe brevemente tu caso"
               value={appointmentForm.message}
@@ -94,9 +174,14 @@ const BookingModal = ({
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-[#66102B] text-white py-3 rounded-lg hover:bg-[#8B1538] transition-colors duration-300 font-semibold"
+                disabled={!isFormValid()}
+                className={`flex-1 py-3 rounded-lg transition-colors duration-300 font-semibold ${
+                  isFormValid()
+                    ? 'bg-[#66102B] text-white hover:bg-[#8B1538] cursor-pointer'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                Confirmar Cita
+                {isFormValid() ? 'Confirmar Cita' : 'Complete todos los campos'}
               </button>
             </div>
           </form>

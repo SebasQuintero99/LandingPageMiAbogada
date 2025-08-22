@@ -1,4 +1,5 @@
 import React from 'react';
+import { useBusinessConfig } from '../contexts/BusinessConfigContext';
 
 const WhatsAppIcon = () => (
   <svg
@@ -13,8 +14,9 @@ const WhatsAppIcon = () => (
 );
 
 const WhatsAppButton = () => {
-  const phoneNumber = '573177154643';
-  const message = 'Hola Dra. Angy, estoy interesado/a en sus servicios legales y me gustaría agendar una consulta.';
+  const { businessConfig, getWhatsAppNumber } = useBusinessConfig();
+  const phoneNumber = getWhatsAppNumber();
+  const message = `Hola ${businessConfig.name.split(' ')[1]}, estoy interesado/a en sus servicios legales y me gustaría agendar una consulta.`;
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
   return (

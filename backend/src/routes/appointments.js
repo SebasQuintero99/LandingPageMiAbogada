@@ -15,7 +15,7 @@ router.post('/', createAppointment);
 router.get('/available-dates', getAvailableDates);
 
 // Rutas protegidas (admin)
-router.get('/', authMiddleware, getAppointments);
+router.get('/admin', authMiddleware, getAppointments);
 router.patch('/:id/status', authMiddleware, updateAppointmentStatus);
 
 module.exports = router;

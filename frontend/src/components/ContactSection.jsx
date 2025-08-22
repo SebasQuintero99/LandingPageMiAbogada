@@ -1,7 +1,10 @@
 import React from 'react';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { useBusinessConfig } from '../contexts/BusinessConfigContext';
 
 const ContactSection = () => {
+  const { businessConfig } = useBusinessConfig();
+
   return (
     <section id="contacto" className="py-20 bg-[#66102B] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,14 +26,14 @@ const ContactSection = () => {
               <Phone className="w-6 h-6 text-slate-300" />
               <div>
                 <p className="font-semibold">Teléfono</p>
-                <p className="text-slate-300">(+57) 317 715 4643</p>
+                <p className="text-slate-300">{businessConfig.phone}</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <Mail className="w-6 h-6 text-slate-300" />
               <div>
                 <p className="font-semibold">Email</p>
-                <p className="text-slate-300">angytatianagarzonfierrolaboral@gmail.com</p>
+                <p className="text-slate-300">{businessConfig.email}</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">

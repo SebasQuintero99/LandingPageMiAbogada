@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.error || `Error ${response.status}`);
       }
 
-      return { success: true, data };
+      return data;
     } catch (error) {
       console.error('API Request error:', error);
       return { success: false, error: error.message };

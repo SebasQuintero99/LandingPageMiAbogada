@@ -1,5 +1,6 @@
 import React from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import Calendar from './Calendar';
 
 const AppointmentBookingSection = ({ 
   selectedDate, 
@@ -22,30 +23,11 @@ const AppointmentBookingSection = ({
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Calendar */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center">
-              <Calendar className="w-5 h-5 mr-2 text-[#66102B]" />
-              Fechas Disponibles
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {availableDates.slice(0, 10).map((date, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedDate(date)}
-                  className={`p-3 rounded-lg text-sm transition-all duration-200 ${
-                    selectedDate?.toDateString() === date.toDateString()
-                      ? 'bg-[#66102B] text-white shadow-md'
-                      : 'bg-slate-100 text-slate-700 hover:bg-[#66102B] hover:text-white'
-                  }`}
-                >
-                  {date.toLocaleDateString('es-CO', { 
-                    day: 'numeric', 
-                    month: 'short' 
-                  })}
-                </button>
-              ))}
-            </div>
-          </div>
+          <Calendar 
+            selectedDate={selectedDate} 
+            setSelectedDate={setSelectedDate} 
+            availableDates={availableDates}
+          />
 
           {/* Time Slots */}
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
