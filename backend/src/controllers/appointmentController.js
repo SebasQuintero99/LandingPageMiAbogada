@@ -254,7 +254,7 @@ const getAvailableDates = async (req, res) => {
     // Obtener fechas disponibles específicas del calendario
     const configuredDates = schedule.availableDates || [];
 
-    for (let i = 1; i <= parseInt(days); i++) {
+    for (let i = 0; i <= parseInt(days); i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       // Evitar problemas de timezone usando formato local
