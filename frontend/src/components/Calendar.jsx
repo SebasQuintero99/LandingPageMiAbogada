@@ -28,9 +28,24 @@ const Calendar = ({ selectedDate, setSelectedDate, availableDates }) => {
   // Verificar si una fecha está disponible
   const isDateAvailable = (day) => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return availableDates.some(availableDate => 
-      availableDate.toDateString() === date.toDateString()
-    );
+    
+    // Convertir fecha a string formato YYYY-MM-DD para comparar con admin config
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${dayStr}`;
+    
+    return availableDates.some(availableDate => {
+      // Si es string (formato admin), comparar directamente
+      if (typeof availableDate === 'string') {
+        return availableDate === dateString;
+      }
+      // Si es objeto Date, convertir a string
+      if (availableDate instanceof Date) {
+        return availableDate.toDateString() === date.toDateString();
+      }
+      return false;
+    });
   };
 
   // Verificar si una fecha está seleccionada
