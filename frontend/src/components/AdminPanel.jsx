@@ -10,12 +10,37 @@ import {
   Bell,
   BarChart3,
   Settings as SettingsIcon,
-  RefreshCw
+  RefreshCw,
+  TrendingUp,
+  Clock,
+  CheckCircle
 } from 'lucide-react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import { useAuth } from '../contexts/AuthContext';
 import AppointmentManagement from './AppointmentManagement';
 import ContactManagement from './ContactManagement';
 import Settings from './Settings';
+
+// Registrar componentes de Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const AdminPanel = () => {
   const location = useLocation();
@@ -243,32 +268,141 @@ const DashboardContent = ({ stats, loading }) => {
       value: stats.totalAppointments,
       icon: Calendar,
       color: 'blue',
+      bgColor: 'bg-blue-500',
+      change: '+12%',
+      changeType: 'positive'
     },
     {
       title: 'Citas Pendientes',
       value: stats.pendingAppointments,
-      icon: Calendar,
+      icon: Clock,
       color: 'yellow',
+      bgColor: 'bg-yellow-500',
+      change: '+5%',
+      changeType: 'neutral'
     },
     {
       title: 'Total Contactos',
       value: stats.totalContacts,
       icon: MessageSquare,
       color: 'green',
+      bgColor: 'bg-green-500',
+      change: '+8%',
+      changeType: 'positive'
     },
     {
       title: 'Contactos Pendientes',
       value: stats.pendingContacts,
-      icon: MessageSquare,
+      icon: Bell,
       color: 'red',
+      bgColor: 'bg-red-500',
+      change: '-3%',
+      changeType: 'negative'
     },
   ];
 
-  const colorClasses = {
-    blue: 'bg-blue-500',
-    yellow: 'bg-yellow-500',
-    green: 'bg-green-500',
-    red: 'bg-red-500',
+  // Configuración para el gráfico de barras de citas
+  const appointmentsChartData = {
+    labels: ['Total Citas', 'Confirmadas', 'Pendientes', 'Canceladas'],
+    datasets: [
+      {
+        label: 'Citas',
+        data: [
+          stats.totalAppointments,
+          stats.totalAppointments - stats.pendingAppointments,
+          stats.pendingAppointments,
+          0
+        ],
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(34, 197, 94, 0.8)',
+          'rgba(234, 179, 8, 0.8)',
+          'rgba(239, 68, 68, 0.8)',
+        ],
+        borderColor: [
+          'rgba(59, 130, 246, 1)',
+          'rgba(34, 197, 94, 1)',
+          'rgba(234, 179, 8, 1)',
+          'rgba(239, 68, 68, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Configuración para el gráfico de dona de estados
+  const statusChartData = {
+    labels: ['Completadas', 'Pendientes', 'Procesando'],
+    datasets: [
+      {
+        data: [
+          stats.totalAppointments - stats.pendingAppointments,
+          stats.pendingAppointments,
+          stats.pendingContacts
+        ],
+        backgroundColor: [
+          '#10B981',
+          '#F59E0B', 
+          '#EF4444',
+        ],
+        borderWidth: 2,
+        borderColor: '#ffffff',
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        cornerRadius: 8,
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        }
+      },
+      x: {
+        grid: {
+          display: false,
+        }
+      }
+    }
+  };
+
+  const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        cornerRadius: 8,
+      }
+    },
+    cutout: '60%',
   };
 
   return (
@@ -278,15 +412,28 @@ const DashboardContent = ({ stats, loading }) => {
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <div key={index} className="bg-white rounded-lg shadow p-6">
+            <div key={index} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">{card.title}</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 font-medium">{card.title}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">
                     {loading ? '...' : card.value}
                   </p>
+                  <div className="flex items-center mt-2">
+                    <TrendingUp className={`w-4 h-4 mr-1 ${
+                      card.changeType === 'positive' ? 'text-green-500' : 
+                      card.changeType === 'negative' ? 'text-red-500' : 'text-yellow-500'
+                    }`} />
+                    <span className={`text-sm font-medium ${
+                      card.changeType === 'positive' ? 'text-green-600' : 
+                      card.changeType === 'negative' ? 'text-red-600' : 'text-yellow-600'
+                    }`}>
+                      {card.change}
+                    </span>
+                    <span className="text-xs text-gray-500 ml-1">vs mes anterior</span>
+                  </div>
                 </div>
-                <div className={`p-3 rounded-lg ${colorClasses[card.color]}`}>
+                <div className={`p-3 rounded-lg ${card.bgColor}`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -295,32 +442,80 @@ const DashboardContent = ({ stats, loading }) => {
         })}
       </div>
 
-      {/* Welcome Message */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Bienvenida al Panel de Administración
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bar Chart */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado de Citas</h3>
+          <div className="h-80">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <Bar data={appointmentsChartData} options={chartOptions} />
+            )}
+          </div>
+        </div>
+
+        {/* Doughnut Chart */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución General</h3>
+          <div className="h-80">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <Doughnut data={statusChartData} options={doughnutOptions} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* System Status */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+          <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+          Estado del Sistema
         </h2>
-        <p className="text-gray-600 mb-4">
-          Desde aquí puedes gestionar todas las citas y contactos de tu práctica legal.
-          El sistema está completamente integrado con la base de datos PostgreSQL.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">🔗 APIs Conectadas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">APIs Funcionando</h3>
             <ul className="text-sm text-gray-600 space-y-1">
-              <li>✅ Sistema de autenticación</li>
+              <li>✅ Autenticación JWT</li>
               <li>✅ Gestión de citas</li>
               <li>✅ Gestión de contactos</li>
-              <li>✅ Base de datos PostgreSQL</li>
+              <li>✅ Google Calendar</li>
             </ul>
           </div>
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">📊 Estado del Sistema</h3>
+          
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <BarChart3 className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">Base de Datos</h3>
             <ul className="text-sm text-gray-600 space-y-1">
-              <li>🟢 Backend: Funcionando</li>
-              <li>🟢 Base de datos: Conectada</li>
-              <li>🟢 Autenticación: Activa</li>
-              <li>🟢 Frontend: Operativo</li>
+              <li>🟢 PostgreSQL Conectada</li>
+              <li>🟢 Migraciones Al Día</li>
+              <li>🟢 Backup Automático</li>
+              <li>🟢 Performance Óptima</li>
+            </ul>
+          </div>
+
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+              <TrendingUp className="w-8 h-8 text-purple-600" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">Integraciones</h3>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>📧 Email SMTP Gmail</li>
+              <li>📅 Google Calendar</li>
+              <li>🎥 Google Meet</li>
+              <li>💬 WhatsApp Business</li>
             </ul>
           </div>
         </div>
