@@ -33,6 +33,8 @@ model Appointment {
   clientName       String
   clientEmail      String
   clientPhone      String
+  meetLink         String?           // Google Meet link
+  calendarEventId  String?           // Google Calendar Event ID
   userId           String?
   user             User?             @relation(fields: [userId], references: [id])
 
