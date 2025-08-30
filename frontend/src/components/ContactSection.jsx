@@ -19,7 +19,9 @@ const ContactSection = () => {
               <MapPin className="w-6 h-6 text-slate-300" />
               <div>
                 <p className="font-semibold">Oficina</p>
-                <p className="text-slate-300">Calle 23B sur #29-22 San Jorge 1ra Etapa<br />Neiva, Huila</p>
+                <p className="text-slate-300">
+                  {businessConfig.address || 'Proximamente'}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -32,7 +34,7 @@ const ContactSection = () => {
             <div className="flex items-center space-x-4">
               <Mail className="w-6 h-6 text-slate-300" />
               <div>
-                <p className="font-semibold">Email</p>
+                <p className="font-semibold">Correo electrónico</p>
                 <p className="text-slate-300">{businessConfig.email}</p>
               </div>
             </div>

@@ -53,8 +53,8 @@ export const BusinessConfigProvider = ({ children }) => {
   }, []);
 
   // Función para refrescar la configuración (útil después de guardar cambios en admin)
-  const refreshConfig = () => {
-    loadBusinessConfig();
+  const refreshConfig = async () => {
+    await loadBusinessConfig();
   };
 
   // Función para obtener número de WhatsApp limpio

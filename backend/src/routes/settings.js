@@ -50,8 +50,14 @@ router.get('/business/public', async (req, res) => {
       where: { key: 'business' }
     });
 
-    // Siempre devolver la configuración por defecto inicialmente para debug
-    const businessData = DEFAULT_CONFIG.business;
+    let businessData;
+    if (config) {
+      // Si existe configuración en la BD, usarla
+      businessData = JSON.parse(config.value);
+    } else {
+      // Si no existe, usar la configuración por defecto
+      businessData = DEFAULT_CONFIG.business;
+    }
     
     res.json({
       success: true,

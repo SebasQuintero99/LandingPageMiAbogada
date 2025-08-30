@@ -151,7 +151,7 @@ const Settings = () => {
         
         // Si se guardó configuración del negocio, refrescar el contexto global
         if (section === 'business') {
-          refreshConfig();
+          await refreshConfig();
         }
       } else {
         setMessage({ type: 'error', text: result.message || 'Error al guardar la configuración' });

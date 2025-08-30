@@ -57,6 +57,8 @@ const AdminPanel = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState(new Set());
+  const [userActive, setUserActive] = useState(false);
+  const [pollingPaused, setPollingPaused] = useState(false);
 
   const { user, logout, apiRequest } = useAuth();
 
@@ -75,14 +77,42 @@ const AdminPanel = () => {
     loadStats();
   }, []);
 
-  // Polling automático para detectar nuevas citas cada 30 segundos
+  // Detectar actividad del usuario para pausar polling
+  useEffect(() => {
+    let activityTimer;
+    
+    const handleUserActivity = () => {
+      setUserActive(true);
+      clearTimeout(activityTimer);
+      activityTimer = setTimeout(() => {
+        setUserActive(false);
+      }, 10000); // Considerar inactivo después de 10 segundos
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.addEventListener(event, handleUserActivity, true);
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserActivity, true);
+      });
+      clearTimeout(activityTimer);
+    };
+  }, []);
+
+  // Polling automático inteligente - 2 minutos y solo cuando usuario está inactivo
   useEffect(() => {
     const interval = setInterval(() => {
-      loadStats(false); // No mostrar loading en actualizaciones automáticas
-    }, 30000); // 30 segundos
+      // Solo actualizar si no está pausado manualmente, el usuario está inactivo y no hay dropdown abierto
+      if (!pollingPaused && !userActive && !notificationsOpen) {
+        loadStats(false); // No mostrar loading en actualizaciones automáticas
+      }
+    }, 120000); // 2 minutos
 
     return () => clearInterval(interval);
-  }, []);
+  }, [pollingPaused, userActive, notificationsOpen]);
 
   // Cerrar dropdown de notificaciones al hacer click fuera
   useEffect(() => {
@@ -297,6 +327,33 @@ const AdminPanel = () => {
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 <span>Actualizar</span>
               </button>
+              
+              <button
+                onClick={() => setPollingPaused(!pollingPaused)}
+                className={`flex items-center space-x-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                  pollingPaused 
+                    ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' 
+                    : 'bg-green-100 text-green-800 hover:bg-green-200'
+                }`}
+                title={pollingPaused ? 'Reanudar actualizaciones automáticas' : 'Pausar actualizaciones automáticas'}
+              >
+                {pollingPaused ? (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                    </svg>
+                    <span className="hidden sm:inline">Reanudar</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span className="hidden sm:inline">Pausar</span>
+                  </>
+                )}
+              </button>
+              
               
               <div className="relative notification-dropdown">
                 <button
