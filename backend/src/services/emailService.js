@@ -137,7 +137,22 @@ const sendAppointmentStatusUpdate = async (appointment, status) => {
           
           ${status === 'CONFIRMED' ? `
             <p><strong>Tu cita está confirmada.</strong> Te esperamos en la fecha y hora programada.</p>
-            <p><strong>Dirección:</strong> Calle 23B sur #29-22 San Jorge 1ra Etapa, Neiva, Huila</p>
+            ${appointment.meetLink ? `
+              <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #22c55e;">
+                <h4 style="color: #16a34a; margin: 0 0 10px 0;">🎥 Videoconferencia disponible</h4>
+                <p style="margin: 0;">Puedes unirte a la consulta virtualmente:</p>
+                <p style="margin: 10px 0;">
+                  <a href="${appointment.meetLink}" style="background: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                    Unirse a Google Meet
+                  </a>
+                </p>
+                <p style="font-size: 12px; color: #6b7280; margin: 10px 0 0 0;">
+                  También puedes encontrar este enlace en tu calendario de Google si aceptas la invitación.
+                </p>
+              </div>
+            ` : ''}
+            <p><strong>Dirección (presencial):</strong> Calle 23B sur #29-22 San Jorge 1ra Etapa, Neiva, Huila</p>
+            <p><small>La consulta puede ser presencial o virtual según se coordine.</small></p>
           ` : ''}
           
           ${status === 'CANCELLED' ? `
