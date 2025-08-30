@@ -28,6 +28,7 @@ const AdminPanel = () => {
     pendingContacts: 0
   });
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const { user, logout, apiRequest } = useAuth();
 
@@ -75,6 +76,8 @@ const AdminPanel = () => {
       }));
     }
 
+    // Trigger refresh for child components
+    setRefreshTrigger(prev => prev + 1);
     setLoading(false);
   };
 
@@ -215,9 +218,9 @@ const AdminPanel = () => {
         <main className="flex-1 p-6">
           <Routes>
             <Route index element={<DashboardContent stats={stats} loading={loading} />} />
-            <Route path="citas" element={<AppointmentManagement />} />
-            <Route path="contactos" element={<ContactManagement />} />
-            <Route path="configuracion" element={<Settings />} />
+            <Route path="citas" element={<AppointmentManagement key={refreshTrigger} />} />
+            <Route path="contactos" element={<ContactManagement key={refreshTrigger} />} />
+            <Route path="configuracion" element={<Settings key={refreshTrigger} />} />
           </Routes>
         </main>
       </div>
