@@ -1,6 +1,7 @@
 const prisma = require('../utils/database');
 const { createAppointmentSchema, getActiveConsultationTypes } = require('../utils/validation');
 const emailService = require('../services/emailService');
+const googleCalendarService = require('../services/googleCalendarService');
 
 // Crear nueva cita
 const createAppointment = async (req, res) => {
@@ -101,8 +102,7 @@ const getAppointments = async (req, res) => {
     const appointments = await prisma.appointment.findMany({
       where,
       orderBy: [
-        { date: 'asc' },
-        { time: 'asc' }
+        { createdAt: 'desc' } // Mostrar las más recientes primero
       ],
       skip: (page - 1) * limit,
       take: parseInt(limit)
@@ -143,9 +143,62 @@ const updateAppointmentStatus = async (req, res) => {
       });
     }
 
+    // Obtener la cita actual
+    const currentAppointment = await prisma.appointment.findUnique({
+      where: { id }
+    });
+
+    if (!currentAppointment) {
+      return res.status(404).json({
+        error: 'Cita no encontrada'
+      });
+    }
+
+    let updateData = { status };
+
+    // Si se confirma la cita, crear evento en Google Calendar
+    if (status === 'CONFIRMED' && !currentAppointment.calendarEventId) {
+      try {
+        console.log('Creando evento en Google Calendar para cita:', id);
+        const calendarEvent = await googleCalendarService.createCalendarEvent({
+          id: currentAppointment.id,
+          date: currentAppointment.date,
+          time: currentAppointment.time,
+          consultationType: currentAppointment.consultationType,
+          clientName: currentAppointment.clientName,
+          clientEmail: currentAppointment.clientEmail,
+          clientPhone: currentAppointment.clientPhone,
+          message: currentAppointment.message
+        });
+
+        updateData.meetLink = calendarEvent.meetLink;
+        updateData.calendarEventId = calendarEvent.eventId;
+        
+        console.log('Evento creado exitosamente:', calendarEvent.eventId);
+        console.log('Meet link:', calendarEvent.meetLink);
+
+      } catch (calendarError) {
+        console.error('Error creando evento en Google Calendar:', calendarError);
+        // No fallar la confirmación si el calendario falla
+      }
+    }
+
+    // Si se cancela la cita y tiene evento de calendario, eliminarlo
+    if (status === 'CANCELLED' && currentAppointment.calendarEventId) {
+      try {
+        await googleCalendarService.deleteCalendarEvent(currentAppointment.calendarEventId);
+        updateData.meetLink = null;
+        updateData.calendarEventId = null;
+        console.log('Evento eliminado del calendario:', currentAppointment.calendarEventId);
+      } catch (calendarError) {
+        console.error('Error eliminando evento del calendario:', calendarError);
+        // No fallar la cancelación si el calendario falla
+      }
+    }
+
     const appointment = await prisma.appointment.update({
       where: { id },
-      data: { status }
+      data: updateData
     });
 
     // Enviar email de actualización si es confirmación o cancelación
@@ -179,7 +232,7 @@ const updateAppointmentStatus = async (req, res) => {
 // Obtener fechas disponibles
 const getAvailableDates = async (req, res) => {
   try {
-    const { days = 30 } = req.query;
+    const { days = 90 } = req.query; // Aumentar a 90 días por defecto
     const availableDates = [];
     const today = new Date();
     

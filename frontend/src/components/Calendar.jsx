@@ -76,14 +76,35 @@ const Calendar = ({ selectedDate, setSelectedDate, availableDates }) => {
   const previousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
   const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
   
-  const hasAvailableDatesInPreviousMonth = availableDates.some(date => 
-    date.getMonth() === previousMonth.getMonth() && 
-    date.getFullYear() === previousMonth.getFullYear()
-  );
-  const hasAvailableDatesInNextMonth = availableDates.some(date => 
-    date.getMonth() === nextMonth.getMonth() && 
-    date.getFullYear() === nextMonth.getFullYear()
-  );
+  const hasAvailableDatesInPreviousMonth = availableDates.some(dateItem => {
+    // Si es string (formato admin), convertir a Date
+    if (typeof dateItem === 'string') {
+      const date = new Date(dateItem);
+      return date.getMonth() === previousMonth.getMonth() && 
+             date.getFullYear() === previousMonth.getFullYear();
+    }
+    // Si es objeto Date
+    if (dateItem instanceof Date) {
+      return dateItem.getMonth() === previousMonth.getMonth() && 
+             dateItem.getFullYear() === previousMonth.getFullYear();
+    }
+    return false;
+  });
+  
+  const hasAvailableDatesInNextMonth = availableDates.some(dateItem => {
+    // Si es string (formato admin), convertir a Date
+    if (typeof dateItem === 'string') {
+      const date = new Date(dateItem);
+      return date.getMonth() === nextMonth.getMonth() && 
+             date.getFullYear() === nextMonth.getFullYear();
+    }
+    // Si es objeto Date
+    if (dateItem instanceof Date) {
+      return dateItem.getMonth() === nextMonth.getMonth() && 
+             dateItem.getFullYear() === nextMonth.getFullYear();
+    }
+    return false;
+  });
   
   const canGoPrevious = hasAvailableDatesInPreviousMonth;
   const canGoNext = hasAvailableDatesInNextMonth;
