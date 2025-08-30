@@ -8,9 +8,21 @@ const AppointmentBookingSection = ({
   selectedTime, 
   setSelectedTime, 
   availableDates, 
-  availableHours, 
+ 
+  availableDateData,
   setShowBookingModal 
 }) => {
+  // Obtener horarios disponibles para la fecha seleccionada
+  const getAvailableHoursForDate = () => {
+    if (!selectedDate || !availableDateData) return [];
+    
+    const selectedDateString = selectedDate.toISOString().split('T')[0];
+    const dateData = availableDateData.find(item => item.date === selectedDateString);
+    
+    return dateData ? dateData.availableHours : [];
+  };
+
+  const availableHoursForSelectedDate = getAvailableHoursForDate();
   return (
     <section id="citas" className="py-20 bg-slate-50  ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,7 +48,7 @@ const AppointmentBookingSection = ({
               Horarios
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              {availableHours.map((hour) => (
+              {availableHoursForSelectedDate.map((hour) => (
                 <button
                   key={hour}
                   onClick={() => setSelectedTime(hour)}
@@ -55,6 +67,9 @@ const AppointmentBookingSection = ({
             </div>
             {!selectedDate && (
               <p className="text-sm text-slate-500 mt-3">Selecciona una fecha primero</p>
+            )}
+            {selectedDate && availableHoursForSelectedDate.length === 0 && (
+              <p className="text-sm text-slate-500 mt-3">No hay horarios disponibles para esta fecha</p>
             )}
           </div>
 

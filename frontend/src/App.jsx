@@ -34,6 +34,9 @@ const LandingPage = () => {
     message: ''
   });
 
+  // Estado adicional para guardar datos completos de fechas
+  const [availableDateData, setAvailableDateData] = useState([]);
+
   // Función para cargar fechas disponibles desde la API
   const loadAvailableDates = async () => {
     try {
@@ -42,6 +45,10 @@ const LandingPage = () => {
       
       if (response.ok) {
         const data = await response.json();
+        
+        // Guardar datos completos para horarios específicos por fecha
+        setAvailableDateData(data.availableDates);
+        
         // Crear fechas evitando problemas de timezone
         const dates = data.availableDates.map(item => {
           const [year, month, day] = item.date.split('-');
@@ -238,6 +245,7 @@ const LandingPage = () => {
           setSelectedTime={setSelectedTime}
           availableDates={availableDates}
           availableHours={availableHours}
+          availableDateData={availableDateData}
           setShowBookingModal={setShowBookingModal}
         />
         <TestimonialsSection />
