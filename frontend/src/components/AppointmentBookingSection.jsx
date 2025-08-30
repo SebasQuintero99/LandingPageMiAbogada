@@ -95,7 +95,7 @@ const AppointmentBookingSection = ({
                   onClick={() => setShowBookingModal(true)}
                   className="w-full bg-[#66102B] text-white py-3 rounded-lg hover:bg-[#8B1538] transition-colors duration-300 font-semibold"
                 >
-                  Confirmar Cita
+                  Programar Cita
                 </button>
               </div>
             ) : (

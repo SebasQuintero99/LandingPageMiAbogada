@@ -20,11 +20,11 @@ const sendAppointmentConfirmation = async (appointment) => {
   const mailOptions = {
     from: process.env.SMTP_USER,
     to: appointment.clientEmail,
-    subject: 'Confirmación de Cita - Dra. Angy Tatiana Garzón Fierro',
+    subject: 'Cita Programada - Dra. Angy Tatiana Garzón Fierro',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #66102B, #8B1538); color: white; padding: 20px; text-align: center;">
-          <h1>Confirmación de Cita</h1>
+          <h1>Cita Programada</h1>
         </div>
         
         <div style="padding: 20px; background: #f9f9f9;">
@@ -151,8 +151,6 @@ const sendAppointmentStatusUpdate = async (appointment, status) => {
                 </p>
               </div>
             ` : ''}
-            <p><strong>Dirección (presencial):</strong> Calle 23B sur #29-22 San Jorge 1ra Etapa, Neiva, Huila</p>
-            <p><small>La consulta puede ser presencial o virtual según se coordine.</small></p>
           ` : ''}
           
           ${status === 'CANCELLED' ? `
