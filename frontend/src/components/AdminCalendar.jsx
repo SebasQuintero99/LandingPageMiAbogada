@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Calendar, Plus, Minus, AlertTriangle } from 'lucide-react';
+import { 
+  startOfMonth, 
+  endOfMonth, 
+  getDay, 
+  getDaysInMonth, 
+  format, 
+  addMonths, 
+  subMonths,
+  isBefore,
+  startOfDay
+} from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useAuth } from '../contexts/AuthContext';
 
 const AdminCalendar = ({ config, setConfig }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  
-  // Obtener el primer día del mes y la cantidad de días
-  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-  const daysInMonth = lastDay.getDate();
-  const startingDayOfWeek = firstDay.getDay(); // 0 = Domingo
+  const [monthInfo, setMonthInfo] = useState(null);
+  const [verificationStatus, setVerificationStatus] = useState('loading'); // loading, success, error
+  const { apiRequest } = useAuth();
 
   // Nombres de días y meses
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -20,13 +30,43 @@ const AdminCalendar = ({ config, setConfig }) => {
   // Inicializar días disponibles si no existen
   const availableDates = config.availableDates || [];
 
-  // Función para obtener la fecha en formato string (evitando problemas de timezone)
+  // Verificar información del mes con Google Calendar API
+  const verifyMonthWithAPI = async (date) => {
+    try {
+      setVerificationStatus('loading');
+      
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // JavaScript usa 0-based, API usa 1-based
+      
+      const response = await apiRequest(`/api/schedule/month-info/${year}/${month}`);
+      
+      if (response.success) {
+        setMonthInfo(response.data);
+        setVerificationStatus(response.data.calendarWorking ? 'success' : 'fallback');
+      } else {
+        setVerificationStatus('error');
+        console.error('Error verificando mes:', response.error);
+      }
+    } catch (error) {
+      setVerificationStatus('error');
+      console.error('Error en verificación del mes:', error);
+    }
+  };
+
+  // useEffect para verificar el mes cuando cambia currentDate
+  useEffect(() => {
+    verifyMonthWithAPI(currentDate);
+  }, [currentDate]);
+
+  // Calcular datos del mes actual usando date-fns o información verificada
+  const firstDay = startOfMonth(currentDate);
+  const daysInMonth = monthInfo ? monthInfo.daysInMonth : getDaysInMonth(currentDate);
+  const startingDayOfWeek = getDay(firstDay); // 0 = Domingo
+
+  // Función para obtener la fecha en formato string usando date-fns
   const getDateString = (day) => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const dayStr = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${dayStr}`;
+    return format(date, 'yyyy-MM-dd');
   };
 
   // Verificar si una fecha está marcada como disponible
@@ -35,13 +75,11 @@ const AdminCalendar = ({ config, setConfig }) => {
     return availableDates.includes(dateString);
   };
 
-  // Verificar si una fecha es del pasado
+  // Verificar si una fecha es del pasado usando date-fns
   const isPastDate = (day) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to compare only dates
-    
+    const today = startOfDay(new Date());
     const dateToCheck = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return dateToCheck < today;
+    return isBefore(startOfDay(dateToCheck), today);
   };
 
   // Manejar clic en un día
@@ -92,7 +130,16 @@ const AdminCalendar = ({ config, setConfig }) => {
     }
   };
 
-  // Generar días del calendario
+  // Navegación de meses usando date-fns
+  const goToPreviousMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
+  };
+
+  // Generar días del calendario (después de los cálculos para que se actualice)
   const calendarDays = [];
   
   // Días vacíos al inicio
@@ -105,25 +152,36 @@ const AdminCalendar = ({ config, setConfig }) => {
     calendarDays.push(day);
   }
 
-  // Navegación de meses
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
-
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <div className="mb-3">
         <h4 className="text-md font-semibold text-gray-900 mb-2 flex items-center">
           <Calendar className="w-4 h-4 mr-2" />
           Días Disponibles
+          
+          {/* Indicador de verificación */}
+          {verificationStatus === 'loading' && (
+            <div className="ml-2 animate-spin rounded-full h-3 w-3 border border-gray-300 border-t-blue-600"></div>
+          )}
+          {verificationStatus === 'success' && (
+            <div className="ml-2 w-3 h-3 bg-green-500 rounded-full" title="Verificado con Google Calendar"></div>
+          )}
+          {verificationStatus === 'fallback' && (
+            <div className="ml-2 w-3 h-3 bg-yellow-500 rounded-full" title="Calculado localmente (Google Calendar no disponible)"></div>
+          )}
+          {verificationStatus === 'error' && (
+            <AlertTriangle className="w-3 h-3 ml-2 text-red-500" title="Error en verificación" />
+          )}
         </h4>
-        <p className="text-xs text-gray-600">
-          Clic en los días donde quieres atender citas.
-        </p>
+        <div className="text-xs text-gray-600">
+          <p>Clic en los días donde quieres atender citas.</p>
+          {monthInfo && (
+            <p className="mt-1">
+              <strong>{monthInfo.monthName} {monthInfo.year}</strong> - {monthInfo.daysInMonth} días
+              {monthInfo.calendarWorking ? ' ✓ Verificado' : ' ⚠ Calculado localmente'}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Header del calendario - Compacto */}
@@ -136,7 +194,7 @@ const AdminCalendar = ({ config, setConfig }) => {
         </button>
         
         <h3 className="text-sm font-semibold text-gray-900">
-          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+          {format(currentDate, 'MMMM yyyy', { locale: es })}
         </h3>
         
         <button
