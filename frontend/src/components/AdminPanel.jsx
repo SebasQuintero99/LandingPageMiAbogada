@@ -54,6 +54,9 @@ const AdminPanel = () => {
   });
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [readNotifications, setReadNotifications] = useState(new Set());
 
   const { user, logout, apiRequest } = useAuth();
 
@@ -72,39 +75,107 @@ const AdminPanel = () => {
     loadStats();
   }, []);
 
-  const loadStats = async () => {
-    setLoading(true);
+  // Polling automático para detectar nuevas citas cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadStats(false); // No mostrar loading en actualizaciones automáticas
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cerrar dropdown de notificaciones al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationsOpen && !event.target.closest('.notification-dropdown')) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [notificationsOpen]);
+
+  const loadStats = async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     
     // Cargar estadísticas de citas - usar limit alto para obtener todos los datos
     const appointmentsResult = await apiRequest('/api/appointments/admin?limit=1000');
     const contactsResult = await apiRequest('/api/contacts?limit=1000');
 
+    let allNotifications = [];
+
     if (appointmentsResult.success) {
       const appointments = appointmentsResult.data.appointments || [];
-      const pending = appointments.filter(apt => apt.status === 'PENDING').length;
+      const pendingAppointments = appointments.filter(apt => apt.status === 'PENDING');
+      
+      // Agregar citas pendientes a notificaciones
+      const appointmentNotifications = pendingAppointments.map(apt => ({
+        id: `apt-${apt.id}`,
+        type: 'appointment',
+        title: 'Nueva cita pendiente',
+        message: `${apt.clientName} - ${apt.consultationType}`,
+        date: apt.createdAt,
+        action: () => navigate('/admin/citas')
+      }));
+      allNotifications.push(...appointmentNotifications);
       
       setStats(prev => ({
         ...prev,
         totalAppointments: appointments.length,
-        pendingAppointments: pending
+        pendingAppointments: pendingAppointments.length
       }));
     }
 
     if (contactsResult.success) {
       const contacts = contactsResult.data.contacts || [];
-      const pending = contacts.filter(contact => contact.status === 'PENDING').length;
+      const pendingContacts = contacts.filter(contact => contact.status === 'PENDING');
+      
+      // Agregar contactos pendientes a notificaciones
+      const contactNotifications = pendingContacts.map(contact => ({
+        id: `contact-${contact.id}`,
+        type: 'contact',
+        title: 'Nuevo contacto pendiente',
+        message: `${contact.name} - ${contact.email}`,
+        date: contact.createdAt,
+        action: () => navigate('/admin/contactos')
+      }));
+      allNotifications.push(...contactNotifications);
       
       setStats(prev => ({
         ...prev,
         totalContacts: contacts.length,
-        pendingContacts: pending
+        pendingContacts: pendingContacts.length
       }));
     }
 
+    // Ordenar notificaciones por fecha (más recientes primero)
+    allNotifications.sort((a, b) => new Date(b.date) - new Date(a.date));
+    setNotifications(allNotifications);
+
     // Trigger refresh for child components
     setRefreshTrigger(prev => prev + 1);
-    setLoading(false);
+    if (showLoading) {
+      setLoading(false);
+    }
   };
+
+  // Función para marcar una notificación como leída
+  const markNotificationAsRead = (notificationId) => {
+    setReadNotifications(prev => new Set(prev.add(notificationId)));
+  };
+
+  // Obtener notificaciones no leídas
+  const unreadNotifications = notifications.filter(notification => 
+    !readNotifications.has(notification.id)
+  );
+
+  // Contar notificaciones no leídas
+  const unreadCount = unreadNotifications.length;
 
   const handleLogout = () => {
     logout();
@@ -227,12 +298,93 @@ const AdminPanel = () => {
                 <span>Actualizar</span>
               </button>
               
-              <div className="relative">
-                <Bell className="w-6 h-6 text-gray-600" />
-                {(stats.pendingAppointments + stats.pendingContacts) > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {stats.pendingAppointments + stats.pendingContacts}
-                  </span>
+              <div className="relative notification-dropdown">
+                <button
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className="relative p-1 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
+                >
+                  <Bell className="w-6 h-6" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown de notificaciones */}
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                    <div className="p-4 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900">Notificaciones</h3>
+                    </div>
+                    
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">
+                        No hay notificaciones pendientes
+                      </div>
+                    ) : (
+                      <div className="max-h-72 overflow-y-auto">
+                        {notifications.map((notification) => {
+                          const isRead = readNotifications.has(notification.id);
+                          return (
+                            <div
+                              key={notification.id}
+                              onClick={() => {
+                                markNotificationAsRead(notification.id);
+                                notification.action();
+                                setNotificationsOpen(false);
+                              }}
+                              className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                isRead ? 'opacity-60 bg-gray-50' : 'bg-white'
+                              }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className="flex items-center">
+                                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                                    notification.type === 'appointment' ? 'bg-blue-500' : 'bg-green-500'
+                                  }`}></div>
+                                  {!isRead && (
+                                    <div className="w-2 h-2 bg-red-500 rounded-full ml-1 mt-2"></div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-sm text-gray-600 truncate">
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {new Date(notification.date).toLocaleDateString('es-ES', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    {notifications.length > 0 && (
+                      <div className="p-3 border-t border-gray-200 bg-gray-50">
+                        <button
+                          onClick={() => {
+                            setNotificationsOpen(false);
+                            navigate('/admin/citas');
+                          }}
+                          className="w-full text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Ver todas las citas
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
