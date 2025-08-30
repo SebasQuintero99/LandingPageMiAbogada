@@ -30,7 +30,7 @@ const AppointmentManagement = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest('/api/appointments/admin');
+      const response = await apiRequest('/api/appointments/admin?limit=100'); // Mostrar hasta 100 citas
       
       if (response.success) {
         const appointmentsData = response.data?.appointments || [];
@@ -181,134 +181,210 @@ const AppointmentManagement = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cliente
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha y Hora
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo de Consulta
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha Creación
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAppointments.map((appointment, index) => (
-                  <tr key={appointment.id || index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <User className="h-5 w-5 text-blue-600" />
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {appointment.clientName}
-                          </div>
-                          <div className="text-sm text-gray-500 flex items-center">
-                            <Mail className="w-3 h-3 mr-1" />
-                            {appointment.clientEmail}
-                          </div>
-                          {appointment.clientPhone && (
-                            <div className="text-sm text-gray-500 flex items-center">
-                              <Phone className="w-3 h-3 mr-1" />
-                              {appointment.clientPhone}
+          <>
+            {/* Vista de tabla para desktop */}
+            <div className="hidden lg:block">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Cliente
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Fecha y Hora
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tipo
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estado
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredAppointments.map((appointment, index) => (
+                      <tr key={appointment.id || index} className="hover:bg-gray-50">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <User className="h-4 w-4 text-blue-600" />
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                        <div>
-                          <div>{formatDate(appointment.date)}</div>
-                          <div className="text-gray-500 flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-900">
+                                {appointment.clientName}
+                              </div>
+                              <div className="text-xs text-gray-500 truncate max-w-xs">
+                                {appointment.clientEmail}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-sm text-gray-900">
+                            {formatDate(appointment.date)}
+                          </div>
+                          <div className="text-xs text-gray-500">
                             {appointment.time}
                           </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-sm text-gray-900 truncate max-w-xs">
+                            {appointment.consultationType}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          {getStatusBadge(appointment.status)}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex space-x-1">
+                            {appointment.status === 'PENDING' && (
+                              <>
+                                <button
+                                  onClick={() => updateAppointmentStatus(appointment.id, 'CONFIRMED')}
+                                  className="text-green-600 hover:text-green-900 p-1"
+                                  title="Confirmar"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => updateAppointmentStatus(appointment.id, 'CANCELLED')}
+                                  className="text-red-600 hover:text-red-900 p-1"
+                                  title="Cancelar"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                            {appointment.status === 'CONFIRMED' && (
+                              <button
+                                onClick={() => updateAppointmentStatus(appointment.id, 'CANCELLED')}
+                                className="text-red-600 hover:text-red-900 p-1"
+                                title="Cancelar"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                            {appointment.status === 'CANCELLED' && (
+                              <button
+                                onClick={() => updateAppointmentStatus(appointment.id, 'PENDING')}
+                                className="text-blue-600 hover:text-blue-900 p-1"
+                                title="Reactivar"
+                              >
+                                <AlertCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Vista de tarjetas para móvil y tablet */}
+            <div className="lg:hidden space-y-4">
+              {filteredAppointments.map((appointment, index) => (
+                <div key={appointment.id || index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <User className="h-5 w-5 text-blue-600" />
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{appointment.consultationType}</div>
-                      {appointment.message && (
-                        <div className="text-sm text-gray-500 flex items-center mt-1">
-                          <MessageSquare className="w-3 h-3 mr-1" />
-                          <span className="truncate max-w-xs">{appointment.message}</span>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">
+                          {appointment.clientName}
                         </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatCreatedDate(appointment.createdAt)}
+                        <div className="text-xs text-gray-500">
+                          {appointment.clientEmail}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        Registrado en web
+                    </div>
+                    {getStatusBadge(appointment.status)}
+                  </div>
+                  
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="flex items-center text-gray-500">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        <span className="text-xs">Fecha</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(appointment.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        {appointment.status === 'PENDING' && (
-                          <>
-                            <button
-                              onClick={() => updateAppointmentStatus(appointment.id, 'CONFIRMED')}
-                              className="text-green-600 hover:text-green-900 flex items-center"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Confirmar
-                            </button>
-                            <button
-                              onClick={() => updateAppointmentStatus(appointment.id, 'CANCELLED')}
-                              className="text-red-600 hover:text-red-900 flex items-center"
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Cancelar
-                            </button>
-                          </>
-                        )}
-                        {appointment.status === 'CONFIRMED' && (
-                          <button
-                            onClick={() => updateAppointmentStatus(appointment.id, 'CANCELLED')}
-                            className="text-red-600 hover:text-red-900 flex items-center"
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Cancelar
-                          </button>
-                        )}
-                        {appointment.status === 'CANCELLED' && (
-                          <button
-                            onClick={() => updateAppointmentStatus(appointment.id, 'PENDING')}
-                            className="text-blue-600 hover:text-blue-900 flex items-center"
-                          >
-                            <AlertCircle className="w-4 h-4 mr-1" />
-                            Reactivar
-                          </button>
-                        )}
+                      <div className="text-gray-900">{formatDate(appointment.date)}</div>
+                    </div>
+                    <div>
+                      <div className="flex items-center text-gray-500">
+                        <Clock className="w-4 h-4 mr-1" />
+                        <span className="text-xs">Hora</span>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <div className="text-gray-900">{appointment.time}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3">
+                    <div className="flex items-center text-gray-500 text-xs mb-1">
+                      <MessageSquare className="w-3 h-3 mr-1" />
+                      Tipo de consulta
+                    </div>
+                    <div className="text-sm text-gray-900">{appointment.consultationType}</div>
+                  </div>
+                  
+                  {appointment.message && (
+                    <div className="mt-3">
+                      <div className="text-xs text-gray-500 mb-1">Mensaje:</div>
+                      <div className="text-sm text-gray-700 line-clamp-2">{appointment.message}</div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 flex justify-end space-x-2">
+                    {appointment.status === 'PENDING' && (
+                      <>
+                        <button
+                          onClick={() => updateAppointmentStatus(appointment.id, 'CONFIRMED')}
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full hover:bg-green-200"
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Confirmar
+                        </button>
+                        <button
+                          onClick={() => updateAppointmentStatus(appointment.id, 'CANCELLED')}
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full hover:bg-red-200"
+                        >
+                          <XCircle className="w-3 h-3 mr-1" />
+                          Cancelar
+                        </button>
+                      </>
+                    )}
+                    {appointment.status === 'CONFIRMED' && (
+                      <button
+                        onClick={() => updateAppointmentStatus(appointment.id, 'CANCELLED')}
+                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full hover:bg-red-200"
+                      >
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Cancelar
+                      </button>
+                    )}
+                    {appointment.status === 'CANCELLED' && (
+                      <button
+                        onClick={() => updateAppointmentStatus(appointment.id, 'PENDING')}
+                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full hover:bg-blue-200"
+                      >
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        Reactivar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
