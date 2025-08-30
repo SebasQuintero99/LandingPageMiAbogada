@@ -75,9 +75,9 @@ const AdminPanel = () => {
   const loadStats = async () => {
     setLoading(true);
     
-    // Cargar estadísticas de citas
-    const appointmentsResult = await apiRequest('/api/appointments/admin');
-    const contactsResult = await apiRequest('/api/contacts');
+    // Cargar estadísticas de citas - usar limit alto para obtener todos los datos
+    const appointmentsResult = await apiRequest('/api/appointments/admin?limit=1000');
+    const contactsResult = await apiRequest('/api/contacts?limit=1000');
 
     if (appointmentsResult.success) {
       const appointments = appointmentsResult.data.appointments || [];
